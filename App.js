@@ -61,8 +61,53 @@ const [dados,setDados]=useState(false)
     </View>
 
 
-{ dados&&<BancoDados 
-nome={nome} curso={curso} disciplina={disciplina} descricao={descricao}/>}
+ {dados && (
+
+ <View style={styles.resultado}>
+
+    <Text style={styles.resultadoTitulo}>Usuário Cadastrado!</Text>
+
+   <View style={styles.linha}>
+
+     <Text style={styles.campo}>Nome:</Text>
+
+     <Text style={styles.valor}>{dados.nome}</Text>
+
+   </View>
+
+   <View style={styles.divisor} />
+
+   <View style={styles.linha}>
+
+     <Text style={styles.campo}>Curso:</Text>
+
+     <Text style={styles.valor}>{dados.curso}</Text>
+
+   </View>
+
+   <View style={styles.divisor} />
+
+   <View style={styles.linha}>
+
+     <Text style={styles.campo}>Disciplina:</Text>
+
+     <Text style={styles.valor}>{dados.disciplina}</Text>
+
+   </View>
+
+   <View style={styles.divisor} />
+
+   <View style={styles.linha}>
+
+     <Text style={styles.campo}>Descrição:</Text>
+
+     <Text style={styles.valor}>{dados.descricao}</Text>
+
+   </View>
+
+ </View>
+
+ )}
     </View>
     
   )
@@ -110,7 +155,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     
   },
-  
+ 
   texto:{
     fontSize: 20,
     color: '#fff',
@@ -118,6 +163,41 @@ const styles = StyleSheet.create({
   },
   result:{
     backgroundColor: '#fff'
-  }
+  },
+  resultado:{
+    background: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 24,
+    
+  },
+  resultadoTitulo:{
+    color: '#0000',
+    fontWeigh: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  linha:{
+    flexDirection: 'row',
+    paddingVertical: 8,
+    flexWrap: 'wrap',
+
+  },
+  campo:{
+    color: '#0000'
+    fontSize: 14,
+    marginRight: 6,
+    fontWeight: '600',
+  },
+  valor: {
+    color: '#0000',
+    fontSize: 14,
+    flex: 1,
+  },
+  divisor: {
+    height: 1,
+    backgroundColor: '#0000',
+ },
+
 
 });
