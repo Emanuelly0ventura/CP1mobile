@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { StyleSheet, TextInput, Image, Button, View } from 'react-native';
+import { StyleSheet, TextInput, Image, Text, Button, View } from 'react-native';
 import BancoDados from './components/BancoDados';
 
 export default function App() {
@@ -12,9 +12,12 @@ const [dados,setDados]=useState(false)
 
 
   return (
-    <View>
-    
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.titulo}>Bem-vindo ao super genios!</Text>
+        <Text style={styles.titulo}>Insira seus dados</Text>
         <TextInput
+        
             placeholder='Digite seu nome'
             style={styles.input}
             maxLength={50}
@@ -45,7 +48,8 @@ const [dados,setDados]=useState(false)
             autoCapitalize='words'
             onChangeText={setDescricao}
         />
-    <Button
+      </View>  
+    <Button style={styles.Button}
     title='Enviar'
     onPress={()=>setDados(!dados)}
     />
@@ -59,12 +63,34 @@ const [dados,setDados]=useState(false)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#003754',
     alignItems: 'center',
+    gap: 30,
+
+  },
+  titulo:{
+    gap:20,
+    fontSize:20,
+    color:'#fff',
+    alignC: 'center',
     
+  },
+  card:{
+    backgroundColor: '#6b8a9c',
+    padding: 50,
+    borderRadius: 10,
+    marginTop: 190,
 
   },
   input:{
-    backgroundColor:'#fff'
+    backgroundColor:'#f0e3e5',
+    borderRadius:10,
+    margin:10,
+    fontSize: 19,
+
+  },
+  Button: {
+    padding: 20,
+    
   }
 });
