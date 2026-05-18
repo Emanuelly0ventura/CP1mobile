@@ -1,17 +1,114 @@
-import { StyleSheet, TextInput, Text, Button, View, SafeAreaView, ScrollView  } from 'react-native';
+import { StyleSheet, TextInput, Text, Button, View, SafeAreaView, ScrollView, Image, Linking, Alert,   } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect, useRef  } from "react";
 import { UserContext } from "../context/UserContext";
 
+import * as Sharing from 'expo-sharing'
+import { CameraView,useCameraPermissions } from 'expo-camera';
+import * as MediaLibrary from "expo-media-library"
 
 export default function Home({ navigation }) {
 const { setUsuario } = useContext(UserContext);
 const [nome,setNome]=useState("")
 const [curso,setCurso]=useState("")
-const [disciplina,setDisciplina]=useState("")
-const [descricao,setDescricao]=useState("")
+const [CEP,setCep]=useState("")
+const [endereco, setEndereco] = useState(null);
+const [erroCep, setErroCep] = useState("");
 const [dados,setDados]=useState(false)  
 
+const[permissaoCam,requestPermissaoCam]=useCameraPermissions()
+const[permissaoMedia,requestPermissaoMedia]=MediaLibrary.usePermissions()
+const cameraRef = useRef(null)
+const[foto,setFoto]=useState(null)
+const[isFrontCamera,setIsFrontCamera]=useState(false)
+const[flashLigado,setFlashLigado]=useState(false)
+const[scaneado,setScaneado]=useState(false)
+
+useEffect(()=>{
+  if(permissaoMedia===null)return;
+  if(!permissaoMedia?.granted){
+    requestPermissaoMedia()
+  }
+},[])
+
+if(!permissaoCam)return <View/>
+//Se a permissão da câmera foi negado
+if(!permissaoCam.granted){
+  return(
+    <View>
+      <Text>Permissão da câmera não foi concedida</Text>
+      <Button 
+        title='Permitir'
+        onPress={requestPermissaoCam}
+      />
+    </View>
+  )
+}
+
+
+const tirarFoto = async()=>{
+  if(cameraRef.current){
+    const dadoFoto = await cameraRef.current.takePictureAsync();
+    setFoto(dadoFoto)
+  }
+}
+
+const salvarFoto = async ()=>{
+  if(foto?.uri){
+    try{
+      await MediaLibrary.createAssetAsync(foto.uri)//Salva foto na galeria
+      Alert.alert("Sucesso","Foto salva na galeria")
+      setFoto(null)//Reseta o estado para tirar outra foto
+    }catch(error){
+      Alert.alert("Error","Não foi possível salvar a foto.")
+    }
+  }
+}
+
+const toggleCameraType = () =>{
+  setIsFrontCamera((prev)=>!prev)//Alterna entre true e false
+}
+//Função para alternar o flash
+const alternarFlash = ()=>{
+  setFlashLigado((prev)=>!prev)
+}
+const compartilharFoto = async ()=>{
+  if(foto?.uri && await Sharing.isAvailableAsync()){
+    await Sharing.shareAsync(foto.uri)
+  }else{
+    Alert.alert("Erro","Compartilhamento não disponível")
+  }
+}
+
+async function buscarCep(cepDigitado) {
+  const cepLimpo = cepDigitado.replace(/\D/g, "");
+
+  if (cepLimpo.length !== 8) {
+    setEndereco(null);
+    setErroCep("");
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+    const dados = await resposta.json();
+
+    if (dados.erro) {
+      setEndereco(null);
+      setErroCep("CEP não encontrado");
+      return;
+    }
+
+    setEndereco(dados);
+    setErroCep("");
+  } catch (error) {
+    setEndereco(null);
+    setErroCep("Erro ao buscar o CEP");
+  }
+}
+useEffect(() => {
+  buscarCep(CEP);
+}, [CEP]);
 
   return (
     
@@ -41,27 +138,88 @@ const [dados,setDados]=useState(false)
                 value={curso}
             />
 
-              {/* disciplina */}
-            <TextInput 
-                placeholder='Digite sua disciplina'
-                style={styles.input}
-                maxLength={50}
-                autoCapitalize='words'
-                onChangeText={setDisciplina}
-                value={disciplina}
-            />
 
-              {/* descricao */}
+
+              {/* CEP */}
             <TextInput 
-                placeholder='Digite sua Descricao'
-                style={styles.input}
-                maxLength={100}
-                autoCapitalize='words'
-                onChangeText={setDescricao}
-                value={descricao}
+              placeholder="Digite seu CEP"
+              style={styles.input}
+              maxLength={8}
+              keyboardType="numeric"
+              onChangeText={(texto) => {
+                setCep(texto);
+                buscarCep(texto);
+              }}
+              value={CEP}
             />
+            {erroCep ? (
+              <Text style={{ color: "red", textAlign: "center" }}>{erroCep}</Text>
+            ) : null}
+
+            {endereco ? (
+              <View style={styles.resultado}>
+                <Text style={styles.resultadoTitulo}>Endereço encontrado</Text>
+                <Text>Rua: {endereco.logradouro}</Text>
+                <Text>Bairro: {endereco.bairro}</Text>
+                <Text>Cidade: {endereco.localidade}</Text>
+                <Text>Estado: {endereco.uf}</Text>
+              </View>
+            ) : null}
           </View> 
 
+          <View style={styles.container2}>
+            {
+              !foto?(
+                <>
+                <CameraView
+                  ref={cameraRef}
+                  style={styles.camera}
+                  facing={isFrontCamera?"front":"back"}
+                  flash={flashLigado?"on":"off"}
+                  onBarcodeScanned={({type,data})=>{
+                    if(!scaneado){
+                      setScaneado(true)
+                      Alert.alert("Código detectado",`Tipo:${type}\nValor:${data}`,[
+                        {
+                          text:"Cancelar"
+                        },
+                        {
+                          text:"Pesquisar Produto",
+                          onPress:()=>{
+                            const url = `https://pt.product-search.net/?q=${data}`
+                            Linking.openURL(url)
+                          }
+                        }
+                      ])
+                    }
+                  }}
+                />
+                <Button title='TIRAR UMA FOTO' onPress={tirarFoto}/>
+                <Button title="Alternar Câmera" onPress={toggleCameraType}/>
+                <Button title={flashLigado?"Desligar Flash":"Ligar Flash"} onPress={alternarFlash}/>
+                {scaneado && (
+                  <Button 
+                  title='Escanear novamente'
+                  onPress={()=>setScaneado(false)}
+                />
+                )}
+                </>
+              ):(
+                <>
+                  <Image 
+                    source={{uri:foto.uri}}
+                    style={{width:200,height:200}}
+                  />
+                  <Button title='Salvar Foto' onPress={salvarFoto}/>
+                  <Button title='Tirar outra foto' onPress={()=>setFoto(null)}/>
+                  <Button title="Compartilhar Foto" onPress={compartilharFoto}/>
+                </>
+              )
+            }
+     
+    </View>
+
+            {/* Botão de envio */}
           <View style={styles.Button}>
             <Button
               title="Enviar"
@@ -69,14 +227,40 @@ const [dados,setDados]=useState(false)
                 setUsuario({
                   nome,
                   curso,
-                  disciplina,
-                  descricao,
+                  CEP,
+                  endereco,
                 });
-              
-                navigation.navigate("perfil");
+                if (!nome || !curso || !CEP) {
+                  alert("Por favor, preencha todos os campos.");
+                  return;
+                }else {
+                  navigation.navigate("perfil");
+                }
               }}
-            />            
+            />          
           </View>
+
+          {/* Preciso checar oq é esse erro:
+             ERROR  [Error: Rendered more hooks than during the previous render.]
+             ERROR  [Error: Rendered more hooks than during the previous render.]
+             ERROR  [Error: Uncaught (in promise, id: 5): "Error: Call to function 'ExpoMediaLibrary.getPermissionsAsync' has been rejected.
+            → Caused by: You have requested the AUDIO permission, but it is not declared in AndroidManifest. Update expo-media-library config plugin to include the permission before requesting it."]
+             ERROR  [Error: Uncaught (in promise, id: 6): "Error: Call to function 'ExpoMediaLibrary.getPermissionsAsync' has been rejected.
+            → Caused by: You have requested the AUDIO permission, but it is not declared in AndroidManifest. Update expo-media-library config plugin to include the permission before requesting it."]
+             ERROR  [Error: Rendered more hooks than during the previous render.]
+             ERROR  [Error: Uncaught (in promise, id: 7): "Error: Call to function 'ExpoMediaLibrary.getPermissionsAsync' has been rejected.
+            → Caused by: You have requested the AUDIO permission, but it is not declared in AndroidManifest. Update expo-media-library config plugin to include the permission before requesting it."]
+             ERROR  [Error: Rendered more hooks than during the previous render.]
+             ERROR  [Error: Uncaught (in promise, id: 8): "Error: Call to function 'ExpoMediaLibrary.getPermissionsAsync' has been rejected.
+            → Caused by: You have requested the AUDIO permission, but it is not declared in AndroidManifest. Update expo-media-library config plugin to include the permission before requesting it."]
+             ERROR  [Error: Rendered more hooks than during the previous render.]
+             ERROR  [Error: Uncaught (in promise, id: 9): "Error: Call to function 'ExpoMediaLibrary.getPermissionsAsync' has been rejected.
+            → Caused by: You have requested the AUDIO permission, but it is not declared in AndroidManifest. Update expo-media-library config plugin to include the permission before requesting it."]
+          
+            concertar os erros e depois concertar o layout do app, principalmente a parte da câmera, que tá meio bugada.
+          
+          */}
+
 
         </ScrollView>  
       </SafeAreaView>
@@ -93,6 +277,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 30,
 
+  },
+  container2: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+
+  camera:{
+    width:"100%",
+    height:"80%"
   },
 
   titulo:{
@@ -157,7 +352,7 @@ const styles = StyleSheet.create({
 
   resultadoTitulo:{
     color: '#000',
-    fontWeigh: 'bold',
+    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 16,
     fontSize:20

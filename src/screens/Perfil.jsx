@@ -27,15 +27,36 @@ export default function Perfil({ navigation }) {
         <View style={styles.divisor} />
 
         <View style={styles.linha}>
-          <Text style={styles.campo}>Disciplina:</Text>
-          <Text style={styles.valor}>{usuario?.disciplina}</Text>
+          <Text style={styles.campo}>CEP:</Text>
+          <Text style={styles.valor}>{usuario?.CEP}</Text>
         </View>
 
         <View style={styles.divisor} />
 
         <View style={styles.linha}>
-          <Text style={styles.campo}>Descrição:</Text>
-          <Text style={styles.valor}>{usuario?.descricao}</Text>
+          <Text style={styles.campo}>Rua:</Text>
+          <Text style={styles.valor}>{usuario?.endereco?.logradouro}</Text>
+        </View>
+
+        <View style={styles.divisor} />
+
+        <View style={styles.linha}>
+          <Text style={styles.campo}>Bairro:</Text>
+          <Text style={styles.valor}>{usuario?.endereco?.bairro}</Text>
+        </View>
+
+        <View style={styles.divisor} />
+
+        <View style={styles.linha}>
+          <Text style={styles.campo}>Cidade:</Text>
+          <Text style={styles.valor}>{usuario?.endereco?.localidade}</Text>
+        </View>
+
+        <View style={styles.divisor} />
+
+        <View style={styles.linha}>
+          <Text style={styles.campo}>Estado:</Text>
+          <Text style={styles.valor}>{usuario?.endereco?.uf}</Text>
         </View>
       </View>
 
