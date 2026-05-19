@@ -1,5 +1,6 @@
-import { StyleSheet, TextInput, Text, Button, View, SafeAreaView, ScrollView, Image, Linking, Alert,   } from 'react-native';
+import { StyleSheet, TextInput, Text, Button, View, ScrollView, Image, Linking, Alert,   } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useContext, useState, useEffect, useRef  } from "react";
 import { UserContext } from "../context/UserContext";
 
@@ -16,55 +17,17 @@ const [endereco, setEndereco] = useState(null);
 const [erroCep, setErroCep] = useState("");
 const [dados,setDados]=useState(false)  
 
+
 const[permissaoCam,requestPermissaoCam]=useCameraPermissions()
-const[permissaoMedia,requestPermissaoMedia]=MediaLibrary.usePermissions()
+const [permissaoMedia, requestPermissaoMedia] =
+  MediaLibrary.usePermissions({
+    granularPermissions: ['photo']
+  });
 const cameraRef = useRef(null)
 const[foto,setFoto]=useState(null)
 const[isFrontCamera,setIsFrontCamera]=useState(false)
 const[flashLigado,setFlashLigado]=useState(false)
 const[scaneado,setScaneado]=useState(false)
-
-useEffect(()=>{
-  if(permissaoMedia===null)return;
-  if(!permissaoMedia?.granted){
-    requestPermissaoMedia()
-  }
-},[])
-
-if(!permissaoCam)return <View/>
-//Se a permissão da câmera foi negado
-if(!permissaoCam.granted){
-  return(
-    <View>
-      <Text>Permissão da câmera não foi concedida</Text>
-      <Button 
-        title='Permitir'
-        onPress={requestPermissaoCam}
-      />
-    </View>
-  )
-}
-
-
-const tirarFoto = async()=>{
-  if(cameraRef.current){
-    const dadoFoto = await cameraRef.current.takePictureAsync();
-    setFoto(dadoFoto)
-  }
-}
-
-const salvarFoto = async ()=>{
-  if(foto?.uri){
-    try{
-      await MediaLibrary.createAssetAsync(foto.uri)//Salva foto na galeria
-      Alert.alert("Sucesso","Foto salva na galeria")
-      setFoto(null)//Reseta o estado para tirar outra foto
-    }catch(error){
-      Alert.alert("Error","Não foi possível salvar a foto.")
-    }
-  }
-}
-
 const toggleCameraType = () =>{
   setIsFrontCamera((prev)=>!prev)//Alterna entre true e false
 }
@@ -78,6 +41,51 @@ const compartilharFoto = async ()=>{
   }else{
     Alert.alert("Erro","Compartilhamento não disponível")
   }
+}
+const tirarFoto = async()=>{
+  if(cameraRef.current){
+    const dadoFoto = await cameraRef.current.takePictureAsync();
+    setFoto(dadoFoto)
+  }
+}
+
+const salvarFoto = async ()=>{
+  if(foto?.uri){
+    try{
+      await MediaLibrary.createAssetAsync(foto.uri)
+      Alert.alert("Sucesso","Foto salva na galeria")
+      setFoto(null)
+    }catch(error){
+      Alert.alert("Error","Não foi possível salvar a foto.")
+    }
+  }
+}
+useEffect(() => {
+  async function pedirPermissao() {
+    if (!permissaoMedia?.granted) {
+      await requestPermissaoMedia();
+    }
+  }
+
+  pedirPermissao();
+}, []);
+
+useEffect(() => {
+  buscarCep(CEP);
+}, [CEP]);
+
+if(!permissaoCam)return <View/>
+//Se a permissão da câmera foi negado
+if(!permissaoCam.granted){
+  return(
+    <View>
+      <Text>Permissão da câmera não foi concedida</Text>
+      <Button 
+        title='Permitir'
+        onPress={requestPermissaoCam}
+      />
+    </View>
+  )
 }
 
 async function buscarCep(cepDigitado) {
@@ -101,14 +109,14 @@ async function buscarCep(cepDigitado) {
 
     setEndereco(dados);
     setErroCep("");
+
   } catch (error) {
+
     setEndereco(null);
     setErroCep("Erro ao buscar o CEP");
   }
 }
-useEffect(() => {
-  buscarCep(CEP);
-}, [CEP]);
+
 
   return (
     
@@ -286,8 +294,11 @@ const styles = StyleSheet.create({
   },
 
   camera:{
-    width:"100%",
-    height:"80%"
+  width: 320,
+  height: 420,
+  borderRadius: 20,
+  overflow: 'hidden',
+  marginTop: 20,
   },
 
   titulo:{
