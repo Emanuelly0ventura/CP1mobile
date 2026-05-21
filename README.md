@@ -3,6 +3,10 @@
 ## 🗣️ Dev do projeto
 NOME: Emanuelly Ventura Do Nascimento
 RM: 562339
+NOME: Carolina Nascimento Gonçalves
+RM: 564786
+NOME: Julia Sayuri Kina
+RM: 564555
 
 ## 📌 Visão Geral do Projeto
 O projeto consiste em uma aplicação mobile desenvolvida utilizando o React Native com Expo, com o objetivo de exibir informações básicas relacionadas a dados acadêmicos, como:
